@@ -24,6 +24,7 @@ Example:
 
 ```yaml
 listen_addr: ":8080"
+execution_db: moon-shell.exec.db
 
 gog:
   binary: gog
@@ -43,6 +44,7 @@ gog:
 
 Settings:
 
+- `execution_db`: SQLite execution state database path.
 - `gog.binary`: path/name of the `gog` executable.
 - `gog.account`: Gmail account already authorized in `gog`.
 - `gog.subject`: subject substring used to identify command messages.
@@ -78,6 +80,14 @@ For non-interactive hosts using gog's encrypted file keyring backend, provide th
 ```bash
 export GOG_KEYRING_PASSWORD='set-this-outside-the-repo'
 ```
+
+When running under systemd, put environment variables in `/etc/moon-shell/moon-shell.env`:
+
+```env
+GOG_KEYRING_PASSWORD=your-keyring-password
+```
+
+Use plain `KEY=value` assignments in this file; do not prefix values with `export`.
 
 Do not commit OAuth client JSON, service-account JSON, live `config.yml`, token files, or execution databases.
 
@@ -115,21 +125,20 @@ go build .
 
 ## Install
 
-The Makefile installs the binary under `/usr/local/bin` and the systemd unit under `/etc/systemd/system`:
+Create the service user first if it does not exist:
+
+```bash
+sudo useradd --system --home-dir /var/lib/moon-shell --create-home --shell /usr/sbin/nologin moon-shell
+```
+
+The Makefile installs the binary under `/usr/local/bin`, creates `/var/lib/moon-shell`, and installs the systemd unit under `/etc/systemd/system`:
 
 ```bash
 make test
 sudo make install
 ```
 
-The install target also creates `/etc/moon-shell/config.yml` from `config.example.yml` if it does not already exist, and creates an empty `/etc/moon-shell/moon-shell.env` for environment-only settings such as `GOG_KEYRING_PASSWORD`.
-
-Create the service user and state directory if they do not exist:
-
-```bash
-sudo useradd --system --home-dir /var/lib/moon-shell --create-home --shell /usr/sbin/nologin moon-shell
-sudo chown -R moon-shell:moon-shell /var/lib/moon-shell /etc/moon-shell
-```
+The install target also creates `/etc/moon-shell/config.yml` from `config.example.yml` if it does not already exist, rewrites its `execution_db` to `/var/lib/moon-shell/moon-shell.exec.db`, and creates an empty `/etc/moon-shell/moon-shell.env` for environment-only settings such as `GOG_KEYRING_PASSWORD`.
 
 Configure `/etc/moon-shell/config.yml` and `/etc/moon-shell/moon-shell.env`, then enable the service:
 

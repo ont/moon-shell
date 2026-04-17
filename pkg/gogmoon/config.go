@@ -14,8 +14,9 @@ import (
 const DefaultConfigPath = "config.yml"
 
 type Config struct {
-	ListenAddr string    `yaml:"listen_addr"`
-	Gog        GogConfig `yaml:"gog"`
+	ListenAddr  string    `yaml:"listen_addr"`
+	ExecutionDB string    `yaml:"execution_db"`
+	Gog         GogConfig `yaml:"gog"`
 }
 
 type GogConfig struct {
@@ -41,7 +42,8 @@ type ServiceConfig struct {
 
 func DefaultConfig() Config {
 	return Config{
-		ListenAddr: ":8080",
+		ListenAddr:  ":8080",
+		ExecutionDB: "moon-shell.exec.db",
 		Gog: GogConfig{
 			Binary:         "gog",
 			Account:        "me",
@@ -90,6 +92,9 @@ func (c Config) Validate() error {
 	var problems []string
 	if c.ListenAddr == "" {
 		problems = append(problems, "listen_addr must not be empty")
+	}
+	if c.ExecutionDB == "" {
+		problems = append(problems, "execution_db must not be empty")
 	}
 	if c.Gog.Binary == "" {
 		problems = append(problems, "gog.binary must not be empty")

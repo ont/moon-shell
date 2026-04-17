@@ -4,6 +4,9 @@ BINDIR ?= $(PREFIX)/bin
 SYSCONFDIR ?= /etc
 SYSTEMD_DIR ?= $(SYSCONFDIR)/systemd/system
 CONFIG_DIR ?= $(SYSCONFDIR)/moon-shell
+STATE_DIR ?= /var/lib/moon-shell
+SERVICE_USER ?= moon-shell
+SERVICE_GROUP ?= moon-shell
 SERVICE_NAME ?= moon-shell.service
 SERVICE_SRC := contrib/systemd/$(SERVICE_NAME)
 BUILD_DIR ?= bin
@@ -11,7 +14,7 @@ GO ?= go
 INSTALL ?= install
 SYSTEMCTL ?= systemctl
 
-.PHONY: all build test install install-bin install-config install-systemd uninstall-systemd uninstall clean
+.PHONY: all build test install install-bin install-config install-state install-systemd uninstall-systemd uninstall clean
 
 all: build
 
@@ -21,7 +24,7 @@ build:
 test:
 	$(GO) test ./...
 
-install: install-bin install-config install-systemd
+install: install-bin install-config install-state install-systemd
 
 install-bin: build
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
@@ -31,6 +34,7 @@ install-config:
 	$(INSTALL) -d -m 0755 $(DESTDIR)$(CONFIG_DIR)
 	@if [ ! -f "$(DESTDIR)$(CONFIG_DIR)/config.yml" ]; then \
 		$(INSTALL) -m 0640 config.example.yml "$(DESTDIR)$(CONFIG_DIR)/config.yml"; \
+		sed -i 's|^execution_db:.*|execution_db: /var/lib/moon-shell/moon-shell.exec.db|' "$(DESTDIR)$(CONFIG_DIR)/config.yml"; \
 		echo "Installed example config to $(DESTDIR)$(CONFIG_DIR)/config.yml"; \
 	else \
 		echo "Keeping existing $(DESTDIR)$(CONFIG_DIR)/config.yml"; \
@@ -41,6 +45,16 @@ install-config:
 		echo "Created empty $(DESTDIR)$(CONFIG_DIR)/moon-shell.env"; \
 	else \
 		echo "Keeping existing $(DESTDIR)$(CONFIG_DIR)/moon-shell.env"; \
+	fi
+	@if [ -z "$(DESTDIR)" ] && id -u "$(SERVICE_USER)" >/dev/null 2>&1; then \
+		chown -R root:$(SERVICE_GROUP) "$(CONFIG_DIR)"; \
+		chmod 0750 "$(CONFIG_DIR)"; \
+	fi
+
+install-state:
+	$(INSTALL) -d -m 0750 $(DESTDIR)$(STATE_DIR)
+	@if [ -z "$(DESTDIR)" ] && id -u "$(SERVICE_USER)" >/dev/null 2>&1; then \
+		chown "$(SERVICE_USER):$(SERVICE_GROUP)" "$(STATE_DIR)"; \
 	fi
 
 install-systemd:

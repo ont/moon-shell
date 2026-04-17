@@ -41,7 +41,7 @@ func main() {
 
 	logger := log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 	gog := gogmoon.NewGog(cfg.Gog)
-	store, err := commandexec.NewStore(executionDBPath(cliCfg.ConfigPath))
+	store, err := commandexec.NewStore(cfg.ExecutionDB)
 	if err != nil {
 		log.Fatalf("open execution store: %v", err)
 	}
@@ -54,13 +54,6 @@ func main() {
 	if err := run(rootCtx, cfg, logger, service, server); err != nil {
 		log.Fatalf("run app: %v", err)
 	}
-}
-
-func executionDBPath(configPath string) string {
-	if configPath == "" {
-		configPath = gogmoon.DefaultConfigPath
-	}
-	return configPath + ".exec.db"
 }
 
 func newHTTPServer(service *gogmoon.Service) *echo.Echo {
