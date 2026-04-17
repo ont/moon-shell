@@ -1,5 +1,7 @@
 # moon-shell
 
+> Warning: this codebase was developed with AI assistance from Codex. Review and test changes carefully before using it in sensitive environments.
+
 `moon-shell` is a Gmail command runner backed by the [`gog`](https://gogcli.sh/) CLI.
 
 It periodically searches unread Gmail messages in inbox and spam, finds messages with a configured subject, extracts a shell command from the email body, downloads the body and attachments into a unique `/tmp` workspace, executes the command there, and replies by email with stdout/stderr summaries and attachments.
