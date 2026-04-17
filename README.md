@@ -125,13 +125,7 @@ go build .
 
 ## Install
 
-Create the service user first if it does not exist:
-
-```bash
-sudo useradd --system --home-dir /var/lib/moon-shell --create-home --shell /usr/sbin/nologin moon-shell
-```
-
-The Makefile installs the binary under `/usr/local/bin`, creates `/var/lib/moon-shell`, and installs the systemd unit under `/etc/systemd/system`:
+The Makefile installs the binary under `/usr/local/bin`, creates the `moon-shell` service user if needed, creates `/var/lib/moon-shell`, and installs the systemd unit under `/etc/systemd/system`:
 
 ```bash
 make test

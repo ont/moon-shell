@@ -13,8 +13,9 @@ BUILD_DIR ?= bin
 GO ?= go
 INSTALL ?= install
 SYSTEMCTL ?= systemctl
+USERADD ?= useradd
 
-.PHONY: all build test install install-bin install-config install-state install-systemd uninstall-systemd uninstall clean
+.PHONY: all build test install install-bin install-user install-config install-state install-systemd uninstall-systemd uninstall clean
 
 all: build
 
@@ -24,11 +25,21 @@ build:
 test:
 	$(GO) test ./...
 
-install: install-bin install-config install-state install-systemd
+install: install-bin install-user install-config install-state install-systemd
 
 install-bin: build
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 $(BUILD_DIR)/$(BINARY) $(DESTDIR)$(BINDIR)/$(BINARY)
+
+install-user:
+	@if [ -n "$(DESTDIR)" ]; then \
+		echo "Skipping service user creation for DESTDIR install"; \
+	elif id -u "$(SERVICE_USER)" >/dev/null 2>&1; then \
+		echo "Service user $(SERVICE_USER) already exists"; \
+	else \
+		$(USERADD) --system --home-dir "$(STATE_DIR)" --create-home --shell /usr/sbin/nologin "$(SERVICE_USER)"; \
+		echo "Created service user $(SERVICE_USER)"; \
+	fi
 
 install-config:
 	$(INSTALL) -d -m 0755 $(DESTDIR)$(CONFIG_DIR)
