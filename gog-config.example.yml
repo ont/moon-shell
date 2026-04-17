@@ -1,0 +1,16 @@
+listen_addr: ":8081"
+
+gog:
+  binary: gog
+  account: your-email@example.com
+  subject: moon-shell
+  fetch_interval: 5s
+  command_timeout: 1m
+  workers: 1
+  max_results: 50
+  temp_pattern: moon-shell-gog-*
+  unread_only: true
+  search_subject: true
+  search_queries:
+    - in:inbox
+    - in:spam

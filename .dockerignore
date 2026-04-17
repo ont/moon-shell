@@ -1,0 +1,11 @@
+.git
+moon-shell
+moon-shell-gog
+config.yml
+gog-config.yml
+*.token.json
+*.exec.db
+client_secret_*.json
+moon-shell-*.json
+*service-account*.json
+.codex

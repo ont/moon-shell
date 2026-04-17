@@ -1,0 +1,25 @@
+.codex
+.codex/
+
+# Local runtime configuration and state.
+config.yml
+gog-config.yml
+*.token.json
+*.exec.db
+*.db
+
+# OAuth clients, service accounts, and other Google credentials.
+client_secret_*.json
+moon-shell-*.json
+*service-account*.json
+*.service-account.json
+
+# Local build outputs.
+/moon-shell
+/moon-shell-gog
+/bin/
+/dist/
+
+# Editor and OS noise.
+.DS_Store
+*.swp

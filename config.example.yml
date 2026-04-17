@@ -1,0 +1,18 @@
+listen_addr: ":8080"
+
+gmail:
+  user: me
+  subject: moon-shell
+  fetch_interval: 1m
+  command_timeout: 1m
+  workers: 2
+  max_results: 25
+  client_id: your-oauth-client-id.apps.googleusercontent.com
+  client_secret: your-oauth-client-secret
+  watch:
+    enabled: false
+    project_id: your-google-cloud-project-id
+    topic_name: projects/your-google-cloud-project-id/topics/gmail-watch
+    subscription_id: gmail-watch-sub
+    credentials_file: /full/path/to/service-account-key.json
+    renew_before: 1h
