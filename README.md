@@ -1,6 +1,8 @@
 # moon-shell
 
-> Warning: this codebase was developed with AI assistance from Codex. Review and test changes carefully before using it in sensitive environments.
+> [!WARNING]
+> This codebase was developed with AI assistance from Codex.
+> Review and test changes carefully before using it in sensitive environments.
 
 `moon-shell` is a Gmail command runner backed by the [`gog`](https://gogcli.sh/) CLI.
 
