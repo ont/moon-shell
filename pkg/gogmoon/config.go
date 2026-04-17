@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const DefaultConfigPath = "gog-config.yml"
+const DefaultConfigPath = "config.yml"
 
 type Config struct {
 	ListenAddr string    `yaml:"listen_addr"`
@@ -41,7 +41,7 @@ type ServiceConfig struct {
 
 func DefaultConfig() Config {
 	return Config{
-		ListenAddr: ":8081",
+		ListenAddr: ":8080",
 		Gog: GogConfig{
 			Binary:         "gog",
 			Account:        "me",
@@ -50,7 +50,7 @@ func DefaultConfig() Config {
 			CommandTimeout: time.Minute,
 			Workers:        1,
 			MaxResults:     50,
-			TempPattern:    "moon-shell-gog-*",
+			TempPattern:    "moon-shell-*",
 			UnreadOnly:     true,
 			SearchSubject:  true,
 			SearchQueries: []string{

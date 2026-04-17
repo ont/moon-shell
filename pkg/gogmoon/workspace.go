@@ -16,7 +16,7 @@ type Workspace struct {
 func PrepareWorkspace(ctx context.Context, cfg GogConfig, gog *Gog, message Message) (Workspace, error) {
 	pattern := cfg.TempPattern
 	if pattern == "" {
-		pattern = "moon-shell-gog-*"
+		pattern = "moon-shell-*"
 	}
 	dir, err := os.MkdirTemp("/tmp", pattern)
 	if err != nil {
