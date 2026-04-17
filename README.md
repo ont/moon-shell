@@ -108,3 +108,34 @@ The message is marked read even when the command exits with a non-zero code, bec
 ```bash
 go build .
 ```
+
+## Install
+
+The Makefile installs the binary under `/usr/local/bin` and the systemd unit under `/etc/systemd/system`:
+
+```bash
+make test
+sudo make install
+```
+
+The install target also creates `/etc/moon-shell/config.yml` from `config.example.yml` if it does not already exist, and creates an empty `/etc/moon-shell/moon-shell.env` for environment-only settings such as `GOG_KEYRING_PASSWORD`.
+
+Create the service user and state directory if they do not exist:
+
+```bash
+sudo useradd --system --home-dir /var/lib/moon-shell --create-home --shell /usr/sbin/nologin moon-shell
+sudo chown -R moon-shell:moon-shell /var/lib/moon-shell /etc/moon-shell
+```
+
+Configure `/etc/moon-shell/config.yml` and `/etc/moon-shell/moon-shell.env`, then enable the service:
+
+```bash
+sudo systemctl enable --now moon-shell.service
+sudo systemctl status moon-shell.service
+```
+
+Override install locations if needed:
+
+```bash
+sudo make install PREFIX=/usr/local SYSCONFDIR=/etc
+```

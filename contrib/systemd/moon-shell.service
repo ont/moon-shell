@@ -1,0 +1,23 @@
+[Unit]
+Description=moon-shell utility
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=moon-shell
+Group=moon-shell
+EnvironmentFile=-/etc/moon-shell/moon-shell.env
+ExecStart=/usr/local/bin/moon-shell --config=/etc/moon-shell/config.yml
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+WorkingDirectory=/var/lib/moon-shell
+StateDirectory=moon-shell
+RuntimeDirectory=moon-shell
+NoNewPrivileges=true
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target
