@@ -19,7 +19,7 @@ StateDirectory=moon-shell
 StateDirectoryMode=0750
 RuntimeDirectory=moon-shell
 RuntimeDirectoryMode=0750
-NoNewPrivileges=true
+NoNewPrivileges=no
 PrivateTmp=false
 
 [Install]
