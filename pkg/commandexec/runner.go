@@ -67,14 +67,14 @@ func (r *Runner) ExecuteIn(ctx context.Context, command, dir string) (Result, er
 	case err == nil:
 		result.ExitCode = 0
 		return result, nil
-	case errors.As(err, &exitErr):
-		result.ExitCode = exitErr.ExitCode()
-		return result, nil
 	case runCtx.Err() != nil:
 		result.ExitCode = -1
 		if result.Stderr == "" {
 			result.Stderr = runCtx.Err().Error()
 		}
+		return result, nil
+	case errors.As(err, &exitErr):
+		result.ExitCode = exitErr.ExitCode()
 		return result, nil
 	default:
 		return result, fmt.Errorf("execute command: %w", err)
