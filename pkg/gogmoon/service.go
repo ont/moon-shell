@@ -290,20 +290,19 @@ func (s *Service) updateStatus(update func(*Status)) {
 }
 
 func ExtractCommand(body string) string {
-	body = strings.TrimSpace(body)
-	if body == "" {
+	text := strings.TrimSpace(body)
+	if text == "" {
 		return ""
 	}
 
-	text := body
 	if containsHTML(text) {
 		if extracted, err := htmlToText(text); err == nil && strings.TrimSpace(extracted) != "" {
 			text = extracted
 		}
 	}
 
-	text = htmlstd.UnescapeString(text)
-	return trimQuotedReply(text)
+	text = normalizeCommandText(htmlstd.UnescapeString(text))
+	return strings.Join(commandLines(text), "\n")
 }
 
 func htmlToText(input string) (string, error) {
@@ -312,39 +311,140 @@ func htmlToText(input string) (string, error) {
 		return "", err
 	}
 
-	var parts []string
+	var builder strings.Builder
 	for _, node := range nodes {
-		collectText(node, &parts)
+		writeHTMLText(&builder, node)
 	}
-	return strings.Join(parts, "\n"), nil
+	return builder.String(), nil
 }
 
-func collectText(node *htmlnode.Node, parts *[]string) {
+func writeHTMLText(builder *strings.Builder, node *htmlnode.Node) {
+	if node.Type == htmlnode.ElementNode {
+		if shouldSkipHTMLNode(node) {
+			return
+		}
+		if isQuoteOrSignatureNode(node) {
+			writeLineBreak(builder)
+			builder.WriteString("--")
+			writeLineBreak(builder)
+			return
+		}
+		if node.Data == "br" {
+			writeLineBreak(builder)
+			return
+		}
+		if isBlockHTMLNode(node.Data) {
+			writeLineBreak(builder)
+		}
+	}
+
 	if node.Type == htmlnode.TextNode {
 		text := strings.TrimSpace(node.Data)
 		if text != "" {
-			*parts = append(*parts, text)
+			if builder.Len() > 0 {
+				builder.WriteString(" ")
+			}
+			builder.WriteString(text)
 		}
 	}
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		collectText(child, parts)
+		writeHTMLText(builder, child)
 	}
+
+	if node.Type == htmlnode.ElementNode && isBlockHTMLNode(node.Data) {
+		writeLineBreak(builder)
+	}
+}
+
+func shouldSkipHTMLNode(node *htmlnode.Node) bool {
+	switch node.Data {
+	case "script", "style", "head", "title", "meta", "link":
+		return true
+	default:
+		return false
+	}
+}
+
+func isQuoteOrSignatureNode(node *htmlnode.Node) bool {
+	if node.Data == "blockquote" {
+		return true
+	}
+	for _, attr := range node.Attr {
+		key := strings.ToLower(attr.Key)
+		value := strings.ToLower(attr.Val)
+		if key == "data-signature-widget" {
+			return true
+		}
+		if key == "class" || key == "id" {
+			if strings.Contains(value, "gmail_quote") ||
+				strings.Contains(value, "gmail_signature") ||
+				strings.Contains(value, "yahoo_quoted") ||
+				strings.Contains(value, "moz-cite-prefix") ||
+				strings.Contains(value, "protonmail_quote") ||
+				strings.Contains(value, "signature") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isBlockHTMLNode(name string) bool {
+	switch name {
+	case "address", "article", "aside", "blockquote", "body", "dd", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "ol", "p", "pre", "section", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul":
+		return true
+	default:
+		return false
+	}
+}
+
+func writeLineBreak(builder *strings.Builder) {
+	text := builder.String()
+	if text == "" || strings.HasSuffix(text, "\n") {
+		return
+	}
+	builder.WriteString("\n")
 }
 
 func containsHTML(value string) bool {
-	return strings.Contains(value, "<") && strings.Contains(value, ">")
+	lower := strings.ToLower(value)
+	htmlMarkers := []string{
+		"<html", "<body", "<div", "<p", "<br", "<span", "<blockquote", "<table", "<ul", "<ol", "<li", "<pre",
+		"</html", "</body", "</div", "</p", "</span", "</blockquote", "</table", "</ul", "</ol", "</li", "</pre",
+	}
+	for _, marker := range htmlMarkers {
+		if strings.Contains(lower, marker) {
+			return true
+		}
+	}
+	return false
 }
 
-func trimQuotedReply(value string) string {
-	lines := strings.Split(strings.ReplaceAll(value, "\r\n", "\n"), "\n")
+func normalizeCommandText(value string) string {
+	value = strings.ReplaceAll(value, "\r\n", "\n")
+	value = strings.ReplaceAll(value, "\r", "\n")
+	value = strings.ReplaceAll(value, "\u00a0", " ")
+	value = strings.ReplaceAll(value, "\u200b", "")
+	return value
+}
+
+func commandLines(value string) []string {
+	lines := strings.Split(normalizeCommandText(value), "\n")
 	var kept []string
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 		if isQuotedReplyBoundary(line) && len(kept) > 0 {
 			break
 		}
+		if isQuotedReplyBoundary(line) {
+			continue
+		}
 		kept = append(kept, line)
 	}
-	return strings.TrimSpace(strings.Join(kept, "\n"))
+	return kept
 }
 
 func isQuotedReplyBoundary(line string) bool {
@@ -353,6 +453,9 @@ func isQuotedReplyBoundary(line string) bool {
 		return false
 	}
 	if strings.HasPrefix(trimmed, ">") {
+		return true
+	}
+	if trimmed == "--" {
 		return true
 	}
 	if isSeparatorLine(trimmed) {
@@ -366,6 +469,12 @@ func isQuotedReplyBoundary(line string) bool {
 
 	replyHeaders := []string{"from:", "to:", "subject:", "date:", "sent:", "cc:", "кому:", "тема:", "дата:", "от:"}
 	for _, prefix := range replyHeaders {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	signatures := []string{"sent from my", "sent from", "отправлено из", "отправлено с"}
+	for _, prefix := range signatures {
 		if strings.HasPrefix(lower, prefix) {
 			return true
 		}
